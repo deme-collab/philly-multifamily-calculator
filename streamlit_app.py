@@ -4,7 +4,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 from io import BytesIO
-import html
 
 # Import our calculator functions
 from calculator import (
@@ -16,9 +15,14 @@ from calculator import (
     PAYMENT_STANDARDS
 )
 
-# PDF generation
+# PDF generation with ReportLab
 try:
-    import xhtml2pdf.pisa as pisa
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT
+    from reportlab.pdfgen import canvas
     PDF_AVAILABLE = True
 except ImportError:
     PDF_AVAILABLE = False
@@ -56,103 +60,119 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def generate_pdf_report(analysis_results, input_params, property_address="N/A", property_notes="N/A"):
-    """Generate PDF report from analysis results."""
+    """Generate PDF report from analysis results using ReportLab."""
     if not PDF_AVAILABLE:
-        return None, "PDF generation not available. Please install xhtml2pdf."
+        return None, "PDF generation not available. Please install reportlab."
     
-    # Format the results as text
-    results_text = format_results_as_string(analysis_results, input_params)
-    
-    # Escape HTML characters
-    escaped_text_content = html.escape(results_text)
-    escaped_address = html.escape(property_address)
-    escaped_notes = html.escape(property_notes)
-    
-    html_content = f"""
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <style>
-            body {{
-                font-family: "Arial", sans-serif;
-                font-size: 10pt;
-                line-height: 1.3;
-                margin: 0.5in;
-            }}
-            pre {{
-                white-space: pre-wrap;
-                word-wrap: break-word;
-                font-family: "Courier New", monospace;
-                border: 1px solid #eee;
-                padding: 10px;
-                margin-top: 5px;
-                background-color: #f9f9f9;
-            }}
-            h1 {{
-                font-size: 16pt;
-                text-align: center;
-                margin-bottom: 20px;
-                color: #333;
-            }}
-            h2 {{
-                font-size: 13pt;
-                margin-top: 20px;
-                margin-bottom: 8px;
-                border-bottom: 1px solid #ccc;
-                padding-bottom: 4px;
-                color: #444;
-            }}
-            .info-section p {{
-                margin-left: 5px;
-                margin-top: 3px;
-                margin-bottom: 10px;
-            }}
-            .notes-content {{
-                white-space: pre-wrap;
-                word-wrap: break-word;
-                margin-left: 5px;
-                padding: 8px;
-                border: 1px dashed #ddd;
-                background-color: #fdfdfd;
-                min-height: 20px;
-            }}
-        </style>
-    </head>
-    <body>
-        <h1>Philadelphia Multifamily Property Analysis Report</h1>
-        <p style="text-align: center; color: #666;">Generated on {datetime.now().strftime("%B %d, %Y at %I:%M %p")}</p>
-
-        <h2>Property Information</h2>
-        <div class="info-section">
-            <p><strong>Address:</strong> {escaped_address}</p>
-            <p><strong>ZIP Code:</strong> {input_params['property_zip_code']}</p>
-            <p><strong>Neighborhood:</strong> {get_client_friendly_neighborhood(input_params['property_zip_code'])}</p>
-        </div>
-
-        <h2>Analysis Notes</h2>
-        <div class="notes-content">
-            {escaped_notes}
-        </div>
-
-        <h2>Financial Analysis Details</h2>
-        <pre>{escaped_text_content}</pre>
-    </body>
-    </html>
-    """
-    
-    # Create PDF
-    pdf_buffer = BytesIO()
-    pisa_status = pisa.CreatePDF(
-        html_content.encode('utf-8'),
-        dest=pdf_buffer,
-        encoding='utf-8'
-    )
-    
-    if pisa_status.err:
-        return None, f"PDF generation error: {pisa_status.err}"
-    
-    pdf_buffer.seek(0)
-    return pdf_buffer.getvalue(), None
+    try:
+        # Format the results as text
+        results_text = format_results_as_string(analysis_results, input_params)
+        
+        # Create PDF buffer
+        pdf_buffer = BytesIO()
+        
+        # Create the PDF document
+        doc = SimpleDocTemplate(
+            pdf_buffer,
+            pagesize=letter,
+            rightMargin=0.75*inch,
+            leftMargin=0.75*inch,
+            topMargin=0.75*inch,
+            bottomMargin=0.75*inch
+        )
+        
+        # Container for the 'Flowable' objects
+        elements = []
+        
+        # Define styles
+        styles = getSampleStyleSheet()
+        
+        # Custom styles
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=18,
+            textColor='#333333',
+            spaceAfter=12,
+            alignment=TA_CENTER,
+            fontName='Helvetica-Bold'
+        )
+        
+        heading_style = ParagraphStyle(
+            'CustomHeading',
+            parent=styles['Heading2'],
+            fontSize=14,
+            textColor='#444444',
+            spaceAfter=8,
+            spaceBefore=12,
+            fontName='Helvetica-Bold'
+        )
+        
+        normal_style = ParagraphStyle(
+            'CustomNormal',
+            parent=styles['Normal'],
+            fontSize=10,
+            textColor='#000000',
+            spaceAfter=6,
+            fontName='Helvetica'
+        )
+        
+        code_style = ParagraphStyle(
+            'CustomCode',
+            parent=styles['Code'],
+            fontSize=9,
+            textColor='#000000',
+            fontName='Courier',
+            leftIndent=20,
+            spaceAfter=4
+        )
+        
+        # Title
+        elements.append(Paragraph("Philadelphia Multifamily Property Analysis Report", title_style))
+        elements.append(Spacer(1, 0.1*inch))
+        
+        # Date
+        date_text = f"Generated on {datetime.now().strftime('%B %d, %Y at %I:%M %p')}"
+        elements.append(Paragraph(date_text, normal_style))
+        elements.append(Spacer(1, 0.3*inch))
+        
+        # Property Information Section
+        elements.append(Paragraph("Property Information", heading_style))
+        elements.append(Paragraph(f"<b>Address:</b> {property_address}", normal_style))
+        elements.append(Paragraph(f"<b>ZIP Code:</b> {input_params['property_zip_code']}", normal_style))
+        elements.append(Paragraph(f"<b>Neighborhood:</b> {get_client_friendly_neighborhood(input_params['property_zip_code'])}", normal_style))
+        elements.append(Spacer(1, 0.2*inch))
+        
+        # Analysis Notes Section
+        if property_notes and property_notes.strip() and property_notes != "N/A":
+            elements.append(Paragraph("Analysis Notes", heading_style))
+            # Split notes into lines and add each as a paragraph
+            for line in property_notes.split('\n'):
+                if line.strip():
+                    elements.append(Paragraph(line, normal_style))
+            elements.append(Spacer(1, 0.2*inch))
+        
+        # Financial Analysis Section
+        elements.append(Paragraph("Financial Analysis Details", heading_style))
+        elements.append(Spacer(1, 0.1*inch))
+        
+        # Split the results text into lines and format as monospace
+        for line in results_text.split('\n'):
+            # Escape special characters for XML
+            line_escaped = line.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            # Replace spaces with non-breaking spaces to preserve formatting
+            line_escaped = line_escaped.replace(' ', '&nbsp;')
+            elements.append(Paragraph(f"<font name='Courier' size='8'>{line_escaped}</font>", normal_style))
+        
+        # Build PDF
+        doc.build(elements)
+        
+        # Get the PDF data
+        pdf_buffer.seek(0)
+        return pdf_buffer.getvalue(), None
+        
+    except Exception as e:
+        return None, f"PDF generation error: {str(e)}"
 
 def create_charts(analysis_results):
     """Create visualization charts for the analysis."""
@@ -622,7 +642,7 @@ def main():
                         else:
                             st.error(f"PDF generation failed: {pdf_error}")
                     else:
-                        st.warning("PDF generation not available. Install xhtml2pdf to enable PDF downloads.")
+                        st.warning("PDF generation not available. Install reportlab to enable PDF downloads.")
                 
             except Exception as e:
                 st.error(f"Unexpected error during analysis: {str(e)}")
@@ -712,6 +732,9 @@ def main():
         
         **BY USING THIS CALCULATOR, YOU ACKNOWLEDGE THAT YOU HAVE READ AND AGREE TO THIS DISCLAIMER.**
         """, unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    main())
     
     # Footer with additional legal info
     st.markdown("""
@@ -720,7 +743,4 @@ def main():
         Always consult qualified professionals before making investment decisions<br>
         Last Updated: December 2024</p>
     </div>
-    """, unsafe_allow_html=True)
-
-if __name__ == "__main__":
-    main()
+    """, unsafe_allow_html=True
