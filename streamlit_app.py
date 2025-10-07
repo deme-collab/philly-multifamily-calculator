@@ -744,3 +744,6 @@ if __name__ == "__main__":
         Last Updated: December 2024</p>
     </div>
     """, unsafe_allow_html=True
+                
+if __name__ == "__main__":
+    main()
