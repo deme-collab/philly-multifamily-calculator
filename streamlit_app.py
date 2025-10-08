@@ -719,7 +719,7 @@ def main():
         - ✅ Conduct thorough due diligence
         - ✅ Verify all data independently
         - ✅ Consider all risks involved
-        
+
         **User Responsibility:**
         By using this calculator, you acknowledge that you are solely responsible for your investment decisions 
         and will not rely solely on these calculations for making financial commitments.
@@ -732,9 +732,6 @@ def main():
         
         **BY USING THIS CALCULATOR, YOU ACKNOWLEDGE THAT YOU HAVE READ AND AGREE TO THIS DISCLAIMER.**
         """, unsafe_allow_html=True)
-
-if __name__ == "__main__":
-    main()
     
     # Footer with additional legal info
     st.markdown("""
@@ -743,4 +740,7 @@ if __name__ == "__main__":
         Always consult qualified professionals before making investment decisions<br>
         Last Updated: December 2024</p>
     </div>
-    """, unsafe_allow_html=True
+    """, unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    main()
