@@ -1,11 +1,17 @@
 # calculator.py - Philadelphia Multifamily Property Analysis Core Functions
 """
 Philadelphia Multifamily Property Investment Calculator
-Data effective October 1, 2024
+Supports both 2024 and 2025 PHA Payment Standards
+- 2024 Data: Effective October 1, 2024
+- 2025 Data: Effective November 1, 2025
 """
 
 import re
 from io import StringIO
+
+# ============================================================================
+# 2024 PAYMENT STANDARDS (Original Data)
+# ============================================================================
 
 # Data effective October 1, 2024, from the provided document
 ZIP_TO_GROUP_MAPPING = {
@@ -29,6 +35,99 @@ ZIP_TO_GROUP_MAPPING = {
     "19102": 4, "19103": 4, "19106": 4, "19107": 4,
     "19123": 4, "19130": 4, "19147": 4,
 }
+
+PAYMENT_STANDARDS = {
+    1: {  # Group 1 - Traditional Rents
+        'SRO': 847, '0 BR': 1130, '1 BR': 1240, '2 BR': 1480, '3 BR': 1780,
+        '4 BR': 2030, '5 BR': 2334, '6 BR': 2639, '7 BR': 2943, '8 BR': 3248
+    },
+    2: {  # Group 2 - Mid Range Rents
+        'SRO': 1042, '0 BR': 1390, '1 BR': 1540, '2 BR': 1830, '3 BR': 2200,
+        '4 BR': 2510, '5 BR': 2886, '6 BR': 3263, '7 BR': 3639, '8 BR': 4016
+    },
+    3: {  # Group 3 - Opportunity Rents
+        'SRO': 1342, '0 BR': 1790, '1 BR': 1970, '2 BR': 2350, '3 BR': 2830,
+        '4 BR': 3220, '5 BR': 3703, '6 BR': 4186, '7 BR': 4669, '8 BR': 5152
+    },
+    4: {  # Group 4 - High Opportunity Rents
+        'SRO': 1522, '0 BR': 2030, '1 BR': 2270, '2 BR': 2700, '3 BR': 3250,
+        '4 BR': 3700, '5 BR': 4255, '6 BR': 4810, '7 BR': 5365, '8 BR': 5920
+    }
+}
+
+GROUP_TO_RENT_TYPE = {
+    1: "Traditional Rents",
+    2: "Mid Range Rents",
+    3: "Opportunity Rents",
+    4: "High Opportunity Rents"
+}
+
+# ============================================================================
+# 2025 PAYMENT STANDARDS (New Data)
+# ============================================================================
+
+# Data effective November 1, 2025
+ZIP_TO_GROUP_MAPPING_2025 = {
+    # -------- Group 1 | Basic Rents --------
+    "19124": 1, "19132": 1, "19133": 1, "19141": 1,
+    
+    # -------- Group 2 | Traditional Rents --------
+    "19111": 2, "19115": 2, "19116": 2, "19119": 2,
+    "19120": 2, "19121": 2, "19122": 2, "19126": 2,
+    "19134": 2, "19135": 2, "19136": 2, "19137": 2,
+    "19138": 2, "19139": 2, "19140": 2, "19142": 2,
+    "19143": 2, "19144": 2, "19150": 2, "19151": 2,
+    "19152": 2,
+    
+    # -------- Group 3 | Mid Range Rents --------
+    "19101": 3, "19104": 3, "19105": 3, "19109": 3,
+    "19110": 3, "19112": 3, "19114": 3, "19129": 3,
+    "19131": 3, "19145": 3, "19148": 3, "19149": 3,
+    "19153": 3, "19154": 3,
+    
+    # -------- Group 4 | Opportunity Rents --------
+    "19118": 4, "19123": 4, "19125": 4, "19127": 4,
+    "19128": 4, "19146": 4,
+    
+    # -------- Group 5 | High Opportunity Rents --------
+    "19102": 5, "19103": 5, "19106": 5, "19107": 5,
+    "19130": 5, "19147": 5
+}
+
+PAYMENT_STANDARDS_2025 = {
+    1: {  # Group 1 - Basic Rents
+        'SRO': 825, '0 BR': 1100, '1 BR': 1190, '2 BR': 1420, '3 BR': 1700,
+        '4 BR': 1900, '5 BR': 2185, '6 BR': 2470, '7 BR': 2755, '8 BR': 3040
+    },
+    2: {  # Group 2 - Traditional Rents
+        'SRO': 960, '0 BR': 1280, '1 BR': 1390, '2 BR': 1660, '3 BR': 1990,
+        '4 BR': 2220, '5 BR': 2553, '6 BR': 2886, '7 BR': 3219, '8 BR': 3552
+    },
+    3: {  # Group 3 - Mid Range Rents
+        'SRO': 1162, '0 BR': 1550, '1 BR': 1690, '2 BR': 2010, '3 BR': 2410,
+        '4 BR': 2690, '5 BR': 3093, '6 BR': 3497, '7 BR': 3900, '8 BR': 4304
+    },
+    4: {  # Group 4 - Opportunity Rents
+        'SRO': 1350, '0 BR': 1800, '1 BR': 1960, '2 BR': 2330, '3 BR': 2790,
+        '4 BR': 3120, '5 BR': 3588, '6 BR': 4056, '7 BR': 4524, '8 BR': 4992
+    },
+    5: {  # Group 5 - High Opportunity Rents
+        'SRO': 1575, '0 BR': 2100, '1 BR': 2280, '2 BR': 2720, '3 BR': 3260,
+        '4 BR': 3640, '5 BR': 4186, '6 BR': 4732, '7 BR': 5278, '8 BR': 5824
+    }
+}
+
+GROUP_TO_RENT_TYPE_2025 = {
+    1: "Basic Rents",
+    2: "Traditional Rents",
+    3: "Mid Range Rents",
+    4: "Opportunity Rents",
+    5: "High Opportunity Rents"
+}
+
+# ============================================================================
+# NEIGHBORHOOD GROUPINGS (Same for both years)
+# ============================================================================
 
 NEIGHBORHOOD_ZIP_GROUPINGS = {
     # --- Center City & Adjacent ---
@@ -128,328 +227,294 @@ NEIGHBORHOOD_ZIP_GROUPINGS = {
 
     # Special/Less Residential ZIPs (might not be in your PHA list for housing but good to know)
     "Center City - 30th Street Station Area": ["19101"], # Primarily commercial/transport
-    "USPS Specific (Not typically residential areas)": ["19110"], # Often a PO Box or large institution ZIP
+    "Special/Industrial/Non-Residential": ["19110"], # e.g., USPS & commercial
 }
 
-GROUP_TO_RENT_TYPE = {
-    1: "Traditional Rents",
-    2: "Mid Range Rents",
-    3: "Opportunity Rents",
-    4: "High Opportunity Rents"
-}
+def get_client_friendly_neighborhood(zip_code_str):
+    """
+    Map a ZIP code to a client-friendly neighborhood name.
+    """
+    for neighborhood_name, zip_list in NEIGHBORHOOD_ZIP_GROUPINGS.items():
+        if zip_code_str in zip_list:
+            return neighborhood_name
+    return f"ZIP {zip_code_str} Area (No specific neighborhood mapping available)"
 
-PAYMENT_STANDARDS = {
-    1: {"SRO": 847, "0 BR": 1130, "1 BR": 1240, "2 BR": 1480, "3 BR": 1780, "4 BR": 2030, "5 BR": 2334, "6 BR": 2639, "7 BR": 2943, "8 BR": 3248},
-    2: {"SRO": 1042, "0 BR": 1390, "1 BR": 1540, "2 BR": 1830, "3 BR": 2200, "4 BR": 2510, "5 BR": 2886, "6 BR": 3263, "7 BR": 3639, "8 BR": 4016},
-    3: {"SRO": 1342, "0 BR": 1790, "1 BR": 1970, "2 BR": 2350, "3 BR": 2830, "4 BR": 3220, "5 BR": 3703, "6 BR": 4186, "7 BR": 4669, "8 BR": 5152},
-    4: {"SRO": 1522, "0 BR": 2030, "1 BR": 2270, "2 BR": 2700, "3 BR": 3250, "4 BR": 3700, "5 BR": 4255, "6 BR": 4810, "7 BR": 5365, "8 BR": 5920},
-}
+# ============================================================================
+# HELPER FUNCTIONS FOR YEAR SELECTION
+# ============================================================================
 
-BEDROOM_INPUT_TO_KEY_MAP = {
-    "SRO": "SRO",
+def get_payment_standards_for_year(year):
+    """Get payment standards for the specified year."""
+    if year == "2025":
+        return PAYMENT_STANDARDS_2025
+    else:  # Default to 2024
+        return PAYMENT_STANDARDS
 
-    "0": "0 BR", "0BR": "0 BR", "0 BR": "0 BR",
-    "0BED": "0 BR", "0 BEDS": "0 BR", "0BEDS": "0 BR", "STUDIO": "0 BR", # Studio often maps to 0BR
+def get_zip_mapping_for_year(year):
+    """Get ZIP to group mapping for the specified year."""
+    if year == "2025":
+        return ZIP_TO_GROUP_MAPPING_2025
+    else:  # Default to 2024
+        return ZIP_TO_GROUP_MAPPING
 
-    "1": "1 BR", "1BR": "1 BR", "1 BR": "1 BR",
-    "1BED": "1 BR", "1 BEDS": "1 BR", "1BEDS": "1 BR",
+def get_group_to_rent_type_for_year(year):
+    """Get group to rent type mapping for the specified year."""
+    if year == "2025":
+        return GROUP_TO_RENT_TYPE_2025
+    else:  # Default to 2024
+        return GROUP_TO_RENT_TYPE
 
-    "2": "2 BR", "2BR": "2 BR", "2 BR": "2 BR",
-    "2BED": "2 BR", "2 BEDS": "2 BR", "2BEDS": "2 BR",
+# ============================================================================
+# CORE CALCULATION FUNCTIONS
+# ============================================================================
 
-    "3": "3 BR", "3BR": "3 BR", "3 BR": "3 BR",
-    "3BED": "3 BR", "3 BEDS": "3 BR", "3BEDS": "3 BR",
+def parse_unit_bedroom_counts(unit_str):
+    """
+    Parse unit bedroom counts from a string like "6x2BR, 4x1BR" or "5 x 1 BR, 3 x 2 BR".
+    """
+    if not unit_str or not isinstance(unit_str, str):
+        return [], "Invalid or empty unit string."
 
-    "4": "4 BR", "4BR": "4 BR", "4 BR": "4 BR",
-    "4BED": "4 BR", "4 BEDS": "4 BR", "4BEDS": "4 BR",
+    unit_str_clean = unit_str.strip().upper()
+    unit_patterns = re.split(r'[,;\s]+AND\s+|[,;]', unit_str_clean)
 
-    "5": "5 BR", "5BR": "5 BR", "5 BR": "5 BR",
-    "5BED": "5 BR", "5 BEDS": "5 BR", "5BEDS": "5 BR",
+    parsed_units = []
+    errors = []
 
-    "6": "6 BR", "6BR": "6 BR", "6 BR": "6 BR",
-    "6BED": "6 BR", "6 BEDS": "6 BR", "6BEDS": "6 BR",
+    for pattern in unit_patterns:
+        pattern = pattern.strip()
+        if not pattern:
+            continue
 
-    "7": "7 BR", "7BR": "7 BR", "7 BR": "7 BR",
-    "7BED": "7 BR", "7 BEDS": "7 BR", "7BEDS": "7 BR",
-
-    "8": "8 BR", "8BR": "8 BR", "8 BR": "8 BR",
-    "8BED": "8 BR", "8 BEDS": "8 BR", "8BEDS": "8 BR",
-}
-
-def get_client_friendly_neighborhood(zip_code):
-    """Get client-friendly neighborhood name for a given ZIP code."""
-    for neighborhood, zips in NEIGHBORHOOD_ZIP_GROUPINGS.items():
-        if str(zip_code) in zips:
-            return neighborhood
-    return "Area Not Specified"
-
-def calculate_monthly_piti(property_price, annual_property_taxes, annual_home_insurance,
-                           loan_term_years, annual_interest_rate_percent, down_payment_percent=0):
-    """Calculate monthly PITI (Principal, Interest, Taxes, Insurance) payment."""
-    if not (0 <= down_payment_percent <= 100):
-        raise ValueError("Down payment percent must be between 0 and 100.")
-
-    down_payment_amount = property_price * (down_payment_percent / 100.0)
-    loan_amount = property_price - down_payment_amount
-
-    if loan_amount <= 0:
-        monthly_principal_interest = 0.0
-    else:
-        monthly_interest_rate = (annual_interest_rate_percent / 100.0) / 12.0
-        number_of_payments = loan_term_years * 12
-
-        if number_of_payments == 0:
-             monthly_principal_interest = 0.0
-        elif monthly_interest_rate == 0:
-             monthly_principal_interest = loan_amount / number_of_payments
+        match = re.match(r'(\d+)\s*[xX×]\s*(\d+)\s*BR', pattern)
+        if match:
+            count = int(match.group(1))
+            br_num = int(match.group(2))
+            parsed_units.append({'count': count, 'bedrooms': br_num})
         else:
-            monthly_principal_interest = loan_amount * \
-                                     (monthly_interest_rate * (1 + monthly_interest_rate)**number_of_payments) / \
-                                     ((1 + monthly_interest_rate)**number_of_payments - 1)
+            errors.append(f"Could not parse '{pattern}'")
 
-    monthly_taxes = annual_property_taxes / 12.0
-    monthly_insurance = annual_home_insurance / 12.0
+    if errors:
+        return parsed_units, "; ".join(errors)
+    return parsed_units, None
 
-    total_monthly_piti = monthly_principal_interest + monthly_taxes + monthly_insurance
-    return total_monthly_piti, monthly_principal_interest, monthly_taxes, monthly_insurance
+def calculate_loan_payment(principal, annual_rate, term_years):
+    """
+    Calculate monthly mortgage payment using standard amortization formula.
+    """
+    if principal <= 0 or term_years <= 0:
+        return 0.0
+    if annual_rate == 0:
+        return principal / (term_years * 12)
 
-def get_pha_payment_standard(zip_code, bedrooms_input_str):
-    """Get PHA payment standard for a given ZIP code and bedroom count."""
-    if zip_code not in ZIP_TO_GROUP_MAPPING:
-        return None, None, f"ZIP code {zip_code} not found in PHA SAFMR Group mapping. Please enter a valid Philadelphia ZIP from the list."
+    monthly_rate = annual_rate / 100.0 / 12.0
+    num_payments = term_years * 12
+    monthly_payment = principal * (monthly_rate * (1 + monthly_rate) ** num_payments) / \
+                      ((1 + monthly_rate) ** num_payments - 1)
+    return monthly_payment
 
-    safmr_group = ZIP_TO_GROUP_MAPPING[zip_code]
-    rent_type_name = GROUP_TO_RENT_TYPE.get(safmr_group, "Unknown Rent Type")
+def analyze_multifamily_property(input_params):
+    """
+    Main analysis function that supports both 2024 and 2025 payment standards.
+    
+    Args:
+        input_params: Dictionary containing:
+            - property_zip_code
+            - unit_bedroom_counts_str  
+            - property_price
+            - down_payment_percent
+            - interest_rate
+            - loan_term_years
+            - annual_property_taxes
+            - annual_home_insurance
+            - vacancy_rate_percent
+            - repairs_maintenance_percent
+            - property_management_percent
+            - other_opex_annual
+            - payment_year (optional, defaults to "2024")
+    
+    Returns:
+        Dictionary with 'units' and 'property_summary' keys
+    """
+    
+    # Extract payment year (default to 2024 if not provided)
+    payment_year = input_params.get('payment_year', '2024')
+    
+    # Get appropriate data structures based on year
+    zip_mapping = get_zip_mapping_for_year(payment_year)
+    payment_standards = get_payment_standards_for_year(payment_year)
+    group_to_rent_type = get_group_to_rent_type_for_year(payment_year)
+    
+    # Extract input parameters
+    prop_zip = input_params['property_zip_code']
+    unit_mix_str = input_params['unit_bedroom_counts_str']
+    prop_price = float(input_params['property_price'])
+    dp_percent = float(input_params['down_payment_percent'])
+    interest_rate_annual = float(input_params['interest_rate'])
+    loan_term_years = int(input_params['loan_term_years'])
+    annual_property_tax = float(input_params['annual_property_taxes'])
+    annual_insurance = float(input_params['annual_home_insurance'])
+    vacancy_rate = float(input_params['vacancy_rate_percent'])
+    maintenance_rate = float(input_params['repairs_maintenance_percent'])
+    management_rate = float(input_params['property_management_percent'])
+    other_opex = float(input_params['other_opex_annual'])
 
-    bedroom_key = BEDROOM_INPUT_TO_KEY_MAP.get(str(bedrooms_input_str).upper())
-    if not bedroom_key:
-        return None, None, f"Invalid bedroom input: {bedrooms_input_str}. Use SRO, 0-8."
+    # Initialize result structure
+    result = {
+        'units': [],
+        'property_summary': {}
+    }
 
-    if safmr_group not in PAYMENT_STANDARDS or bedroom_key not in PAYMENT_STANDARDS[safmr_group]:
-        return None, None, f"Payment standard not found for Group {safmr_group}, Bedrooms: {bedroom_key}."
+    # Parse unit mix
+    parsed_units, parse_error = parse_unit_bedroom_counts(unit_mix_str)
+    
+    if parse_error:
+        result['property_summary']['unit_errors'] = parse_error
 
-    payment_standard_amount = PAYMENT_STANDARDS[safmr_group][bedroom_key]
-    return payment_standard_amount, safmr_group, rent_type_name
+    if not parsed_units:
+        result['property_summary']['error'] = "No valid units found to analyze."
+        return result
 
-def analyze_multifamily_property(
-    property_zip_code,
-    unit_bedroom_counts_str, # e.g., "25x1bed, 10x2BR, SRO"
-    property_price,
-    annual_property_taxes,
-    annual_home_insurance,
-    loan_term_years,
-    annual_interest_rate_percent,
-    down_payment_percent=0,
-    vacancy_rate_percent=5,
-    repairs_maintenance_percent=5,
-    property_management_percent=8,
-    other_opex_annual=0
-):
-    """Analyze a multifamily property investment using PHA payment standards."""
-    results = {'units': [], 'property_summary': {}}
-    unit_errors = []
+    # Get SAFMR group for this ZIP
+    safmr_group = zip_mapping.get(prop_zip)
+    
+    if safmr_group is None:
+        result['property_summary']['error'] = f"ZIP code {prop_zip} not found in {payment_year} payment standards."
+        return result
 
-    try:
-        # --- MODIFIED PARSING LOGIC ---
-        expanded_unit_list_from_input = []
-        if not unit_bedroom_counts_str or unit_bedroom_counts_str.strip() == "":
-            results['property_summary']['error'] = "No unit bedroom counts provided."
-            return results
-
-        # Split by comma for different unit groups
-        raw_groups = [g.strip() for g in unit_bedroom_counts_str.split(',')]
-
-        for group_entry in raw_groups:
-            if not group_entry:
-                continue
-
-            # Use regex to parse "COUNTxTYPE" format, allowing spaces around 'x'
-            # and making 'x' case-insensitive.
-            # Example: "25x1bed", "10 X 2BR", "5 x SRO"
-            match = re.match(r"(\d+)\s*X\s*(.+)", group_entry, re.IGNORECASE)
-
-            if match:
-                count_str, bed_type_str_from_regex = match.groups()
-                try:
-                    count = int(count_str)
-                    if count <= 0:
-                        unit_errors.append(f"Invalid count '{count_str}' in group '{group_entry}'. Skipping this group.")
-                        continue
-
-                    processed_bed_type = bed_type_str_from_regex.upper().strip()
-                    expanded_unit_list_from_input.extend([processed_bed_type] * count)
-
-                except ValueError:
-                    unit_errors.append(f"Non-integer count in group '{group_entry}'. Skipping this group.")
-            else:
-                # No "x" multiplier, treat as a single unit entry
-                expanded_unit_list_from_input.append(group_entry.upper().strip())
-
-        if not expanded_unit_list_from_input:
-            if unit_errors:
-                 results['property_summary']['error'] = f"Error parsing unit bedroom counts. Details: {'; '.join(unit_errors)}"
-            else:
-                 results['property_summary']['error'] = "No valid unit groups found after parsing."
-            return results
-
-        unit_bedroom_list_str = expanded_unit_list_from_input
-
-    except Exception as e:
-        results['property_summary']['error'] = f"Error parsing unit bedroom counts: {e}"
-        import traceback
-        results['property_summary']['parsing_traceback'] = traceback.format_exc()
-        return results
-
-    total_potential_pha_rent_monthly = 0
-    num_valid_units = 0
+    rent_type = group_to_rent_type.get(safmr_group, "Unknown")
+    group_payment_standards = payment_standards.get(safmr_group, {})
 
     # Process each unit
-    for i, beds_str_from_list in enumerate(unit_bedroom_list_str):
-        unit_data = {'unit_number': i + 1, 'bedrooms_str': beds_str_from_list}
+    unit_number = 0
+    total_monthly_rent = 0.0
 
-        pha_rent, safmr_group, rent_type = get_pha_payment_standard(property_zip_code, beds_str_from_list)
+    for unit_group in parsed_units:
+        count = unit_group['count']
+        bedrooms = unit_group['bedrooms']
+        bedrooms_str = f"{bedrooms} BR"
 
-        if pha_rent is None:
-            unit_data['error'] = rent_type
-            error_message_for_unit = f"Unit {i+1} (Input: '{beds_str_from_list}'): {rent_type}"
-            if error_message_for_unit not in unit_errors:
-                unit_errors.append(error_message_for_unit)
-        else:
-            unit_data['pha_rent'] = pha_rent
-            unit_data['safmr_group'] = safmr_group
-            unit_data['rent_type'] = rent_type
-            total_potential_pha_rent_monthly += pha_rent
-            num_valid_units += 1
-        results['units'].append(unit_data)
+        # Get PHA rent for this bedroom type
+        pha_rent = group_payment_standards.get(bedrooms_str, None)
 
-    if unit_errors:
-        current_prop_summary_errors = results['property_summary'].get('unit_errors', "")
-        all_errors_str = "; ".join(unit_errors)
-        if current_prop_summary_errors:
-            results['property_summary']['unit_errors'] = f"{current_prop_summary_errors}; {all_errors_str}"
-        else:
-            results['property_summary']['unit_errors'] = all_errors_str
+        for _ in range(count):
+            unit_number += 1
+            unit_info = {
+                'unit_number': unit_number,
+                'bedrooms': bedrooms,
+                'bedrooms_str': bedrooms_str,
+                'safmr_group': safmr_group,
+                'rent_type': rent_type
+            }
 
-        if num_valid_units == 0:
-            existing_error = results['property_summary'].get('error')
-            if existing_error and "No valid unit groups found after parsing" in existing_error:
-                 pass
-            elif existing_error:
-                results['property_summary']['error'] = existing_error + " Additionally, no valid units found for PHA rent calculation."
+            if pha_rent is not None:
+                unit_info['pha_rent'] = float(pha_rent)
+                total_monthly_rent += pha_rent
             else:
-                results['property_summary']['error'] = "No valid units found for PHA rent calculation. Check unit_errors for details."
-            return results
+                unit_info['error'] = f"No PHA rent standard found for {bedrooms_str} in Group {safmr_group}"
+                unit_info['pha_rent'] = 0.0
 
-    results['property_summary']['total_potential_pha_rent_monthly'] = total_potential_pha_rent_monthly
-    gross_potential_rent_annual = total_potential_pha_rent_monthly * 12
+            result['units'].append(unit_info)
 
-    # Calculate PITI for the entire property
-    try:
-        piti_monthly, pi_monthly, t_monthly, i_monthly = calculate_monthly_piti(
-            property_price,
-            annual_property_taxes,
-            annual_home_insurance,
-            loan_term_years,
-            annual_interest_rate_percent,
-            down_payment_percent
-        )
-        results['property_summary']['monthly_piti'] = piti_monthly
-        results['property_summary']['monthly_principal_interest'] = pi_monthly
-        results['property_summary']['monthly_taxes'] = t_monthly
-        results['property_summary']['monthly_insurance'] = i_monthly
-    except ValueError as e:
-        results['property_summary']['error'] = str(e)
-        return results
+    # Calculate property financials
+    down_payment_amount = prop_price * (dp_percent / 100.0)
+    loan_amount = prop_price - down_payment_amount
 
-    # Operating Expenses
-    vacancy_allowance_annual = gross_potential_rent_annual * (vacancy_rate_percent / 100.0)
-    repairs_allowance_annual = gross_potential_rent_annual * (repairs_maintenance_percent / 100.0)
-    management_fee_annual = gross_potential_rent_annual * (property_management_percent / 100.0)
+    # Calculate monthly P&I
+    monthly_pi = calculate_loan_payment(loan_amount, interest_rate_annual, loan_term_years)
+    monthly_taxes = annual_property_tax / 12.0
+    monthly_insurance = annual_insurance / 12.0
+    monthly_piti = monthly_pi + monthly_taxes + monthly_insurance
 
-    results['property_summary']['vacancy_allowance_annual'] = vacancy_allowance_annual
-    results['property_summary']['repairs_allowance_annual'] = repairs_allowance_annual
-    results['property_summary']['management_fee_annual'] = management_fee_annual
-    results['property_summary']['other_opex_annual_input'] = other_opex_annual
-    results['property_summary']['total_operating_expenses_annual_no_debt'] = (
-        vacancy_allowance_annual +
-        repairs_allowance_annual +
-        management_fee_annual +
-        other_opex_annual +
-        annual_property_taxes +
-        annual_home_insurance
-    )
-
-    # Net Operating Income (NOI)
+    # Annual calculations
+    gross_potential_rent_annual = total_monthly_rent * 12
+    vacancy_allowance_annual = gross_potential_rent_annual * (vacancy_rate / 100.0)
     effective_gross_income_annual = gross_potential_rent_annual - vacancy_allowance_annual
-    noi_annual = effective_gross_income_annual - (
-        annual_property_taxes +
-        annual_home_insurance +
+
+    repairs_allowance_annual = gross_potential_rent_annual * (maintenance_rate / 100.0)
+    management_fee_annual = gross_potential_rent_annual * (management_rate / 100.0)
+
+    total_operating_expenses_annual = (
+        annual_property_tax +
+        annual_insurance +
         repairs_allowance_annual +
         management_fee_annual +
-        other_opex_annual
+        other_opex
     )
 
-    results['property_summary']['effective_gross_income_annual'] = effective_gross_income_annual
-    results['property_summary']['noi_annual'] = noi_annual
+    noi_annual = effective_gross_income_annual - total_operating_expenses_annual
+    annual_debt_service = monthly_pi * 12
 
-    # Cash Flow (Before Tax)
-    annual_debt_service = pi_monthly * 12
     cash_flow_before_tax_annual = noi_annual - annual_debt_service
-    results['property_summary']['annual_debt_service'] = annual_debt_service
-    results['property_summary']['cash_flow_before_tax_annual'] = cash_flow_before_tax_annual
-    results['property_summary']['cash_flow_before_tax_monthly'] = cash_flow_before_tax_annual / 12 if cash_flow_before_tax_annual != 0 else 0.0
+    cash_flow_before_tax_monthly = cash_flow_before_tax_annual / 12.0
 
-    # Cash-on-Cash Return
-    down_payment_amount = property_price * (down_payment_percent / 100.0)
-    results['property_summary']['down_payment_amount'] = down_payment_amount
-    if down_payment_amount > 0:
-        cash_on_cash_return_percent = (cash_flow_before_tax_annual / down_payment_amount) * 100.0
+    # Calculate returns
+    total_cash_invested = down_payment_amount
+
+    if total_cash_invested > 0:
+        cash_on_cash_return = (cash_flow_before_tax_annual / total_cash_invested) * 100.0
     elif cash_flow_before_tax_annual > 0:
-        cash_on_cash_return_percent = float('inf')
-    elif cash_flow_before_tax_annual == 0:
-        cash_on_cash_return_percent = 0.0
+        cash_on_cash_return = float('inf')
     else:
-        cash_on_cash_return_percent = -float('inf')
+        cash_on_cash_return = -float('inf')
 
-    results['property_summary']['cash_on_cash_return_percent'] = cash_on_cash_return_percent
+    if prop_price > 0:
+        cap_rate = (noi_annual / prop_price) * 100.0
+    else:
+        cap_rate = float('inf')
 
-    # Gross Rent Multiplier (GRM)
     if gross_potential_rent_annual > 0:
-        grm = property_price / gross_potential_rent_annual
+        grm = prop_price / gross_potential_rent_annual
     else:
-        grm = float('inf') if property_price > 0 else 0.0
-    results['property_summary']['grm'] = grm
+        grm = 0.0
 
-    # Capitalization Rate (Cap Rate) = NOI / Property Price
-    if property_price > 0:
-        cap_rate_percent = (noi_annual / property_price) * 100.0
-    elif noi_annual > 0:
-        cap_rate_percent = float('inf')
-    else:
-        cap_rate_percent = 0.0 if noi_annual == 0 else -float('inf') if noi_annual < 0 and property_price == 0 else 0.0
-        if property_price <= 0 and noi_annual > 0: cap_rate_percent = float('inf')
-        elif property_price <=0 and noi_annual <0: cap_rate_percent = -float('inf')
-        elif property_price <=0 and noi_annual ==0: cap_rate_percent = 0.0
+    # 5-year projections
+    gross_revenue_5_years = gross_potential_rent_annual * 5
+    noi_5_years = noi_annual * 5
 
-    results['property_summary']['cap_rate_percent'] = cap_rate_percent
+    # Build summary
+    result['property_summary'] = {
+        'total_units': unit_number,
+        'safmr_group': safmr_group,
+        'rent_type': rent_type,
+        'payment_year': payment_year,  # NEW: Include payment year in results
+        'total_potential_pha_rent_monthly': total_monthly_rent,
+        'down_payment_amount': down_payment_amount,
+        'loan_amount': loan_amount,
+        'monthly_principal_interest': monthly_pi,
+        'monthly_taxes': monthly_taxes,
+        'monthly_insurance': monthly_insurance,
+        'monthly_piti': monthly_piti,
+        'monthly_maintenance': repairs_allowance_annual / 12.0,
+        'monthly_management_fee': management_fee_annual / 12.0,
+        'monthly_debt_service': monthly_pi,
+        'gross_potential_rent_annual': gross_potential_rent_annual,
+        'vacancy_allowance_annual': vacancy_allowance_annual,
+        'effective_gross_income_annual': effective_gross_income_annual,
+        'repairs_allowance_annual': repairs_allowance_annual,
+        'management_fee_annual': management_fee_annual,
+        'total_operating_expenses_annual': total_operating_expenses_annual,
+        'noi_annual': noi_annual,
+        'annual_debt_service': annual_debt_service,
+        'cash_flow_before_tax_annual': cash_flow_before_tax_annual,
+        'cash_flow_before_tax_monthly': cash_flow_before_tax_monthly,
+        'cash_on_cash_return_percent': cash_on_cash_return,
+        'cap_rate_percent': cap_rate,
+        'grm': grm,
+        'gross_revenue_5_years': gross_revenue_5_years,
+        'noi_5_years': noi_5_years,
+    }
 
-    results['property_summary']['gross_revenue_5_years'] = gross_potential_rent_annual * 5
-    results['property_summary']['noi_5_years'] = noi_annual * 5
-
-    # Final error handling
-    if not results['property_summary'].get('error') and num_valid_units > 0:
-        results['property_summary']['error'] = None
-    elif not results['property_summary'].get('error') and num_valid_units == 0 and not unit_errors:
-        results['property_summary']['error'] = "No units were processed, and no specific errors were found. Check input string."
-
-    return results
+    return result
 
 def format_results_as_string(analysis_results, input_params):
-    """Format analysis results as a readable string."""
+    """
+    Format analysis results as a string for display or export.
+    """
     output_buffer = StringIO()
-
-    summary = analysis_results.get('property_summary', {})
+    
     units_info = analysis_results.get('units', [])
+    summary = analysis_results.get('property_summary', {})
 
     # Extract input parameters
     prop_zip = input_params['property_zip_code']
@@ -461,6 +526,7 @@ def format_results_as_string(analysis_results, input_params):
     rep_maint_percent = input_params['repairs_maintenance_percent']
     prop_mgmt_percent = input_params['property_management_percent']
     other_opex = input_params['other_opex_annual']
+    payment_year = input_params.get('payment_year', '2024')  # NEW: Get payment year
 
     # Get client-friendly neighborhood
     try:
@@ -469,6 +535,7 @@ def format_results_as_string(analysis_results, input_params):
         client_neighborhood = "N/A (Lookup function not found)"
 
     output_buffer.write("--- MULTIFAMILY CALCULATION RESULTS ---\n")
+    output_buffer.write(f"PHA Payment Standards: {payment_year}\n")  # NEW: Display payment year
     output_buffer.write(f"Input Unit String: {input_params['unit_bedroom_counts_str']}\n")
     output_buffer.write(f"Property ZIP Code: {prop_zip}\n")
     output_buffer.write(f"Client-Friendly Area: {client_neighborhood}\n")
