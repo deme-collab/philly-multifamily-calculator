@@ -602,7 +602,7 @@ def main():
                     'annual_property_taxes': annual_property_tax,
                     'annual_home_insurance': annual_insurance,
                     'vacancy_rate_percent': vacancy_rate,
-                    'repairs_maintenance_rate': maintenance_rate,
+                    'repairs_maintenance_percent': maintenance_rate,
                     'property_management_percent': management_fee_rate,
                     'other_opex_annaul': 0,
                     'payment_year': payment_year  # NEW: Pass payment year to calculator
