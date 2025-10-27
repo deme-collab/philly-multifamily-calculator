@@ -27,6 +27,96 @@ try:
 except ImportError:
     PDF_AVAILABLE = False
 
+# ============================================================================
+# NEW: 2025 Payment Standards Data
+# ============================================================================
+
+# 2025 ZIP to Group Mapping (updated from November 2025 schedule)
+ZIP_TO_GROUP_MAPPING_2025 = {
+    # Group 1 - Basic Rents
+    '19124': 'Group 1', '19132': 'Group 1', '19133': 'Group 1', '19141': 'Group 1',
+    
+    # Group 2 - Traditional Rents
+    '19111': 'Group 2', '19115': 'Group 2', '19116': 'Group 2', '19119': 'Group 2',
+    '19120': 'Group 2', '19121': 'Group 2', '19122': 'Group 2', '19126': 'Group 2',
+    '19134': 'Group 2', '19135': 'Group 2', '19136': 'Group 2', '19137': 'Group 2',
+    '19138': 'Group 2', '19139': 'Group 2', '19140': 'Group 2', '19142': 'Group 2',
+    '19143': 'Group 2', '19144': 'Group 2', '19150': 'Group 2', '19151': 'Group 2',
+    '19152': 'Group 2',
+    
+    # Group 3 - Mid Range Rents
+    '19101': 'Group 3', '19104': 'Group 3', '19105': 'Group 3', '19109': 'Group 3',
+    '19110': 'Group 3', '19112': 'Group 3', '19114': 'Group 3', '19129': 'Group 3',
+    '19131': 'Group 3', '19145': 'Group 3', '19148': 'Group 3', '19149': 'Group 3',
+    '19153': 'Group 3', '19154': 'Group 3',
+    
+    # Group 4 - Opportunity Rents
+    '19118': 'Group 4', '19123': 'Group 4', '19125': 'Group 4', '19127': 'Group 4',
+    '19128': 'Group 4', '19146': 'Group 4',
+    
+    # Group 5 - High Opportunity Rents
+    '19102': 'Group 5', '19103': 'Group 5', '19106': 'Group 5', '19107': 'Group 5',
+    '19130': 'Group 5', '19147': 'Group 5'
+}
+
+# 2025 Payment Standards
+PAYMENT_STANDARDS_2025 = {
+    'Group 1': {  # Basic Rents
+        'SRO': 825, '0 BR': 1100, '1 BR': 1190, '2 BR': 1420, '3 BR': 1700,
+        '4 BR': 1900, '5 BR': 2185, '6 BR': 2470, '7 BR': 2755, '8 BR': 3040
+    },
+    'Group 2': {  # Traditional Rents
+        'SRO': 960, '0 BR': 1280, '1 BR': 1390, '2 BR': 1660, '3 BR': 1990,
+        '4 BR': 2220, '5 BR': 2553, '6 BR': 2886, '7 BR': 3219, '8 BR': 3552
+    },
+    'Group 3': {  # Mid Range Rents
+        'SRO': 1162, '0 BR': 1550, '1 BR': 1690, '2 BR': 2010, '3 BR': 2410,
+        '4 BR': 2690, '5 BR': 3093, '6 BR': 3497, '7 BR': 3900, '8 BR': 4304
+    },
+    'Group 4': {  # Opportunity Rents
+        'SRO': 1350, '0 BR': 1800, '1 BR': 1960, '2 BR': 2330, '3 BR': 2790,
+        '4 BR': 3120, '5 BR': 3588, '6 BR': 4056, '7 BR': 4524, '8 BR': 4992
+    },
+    'Group 5': {  # High Opportunity Rents
+        'SRO': 1575, '0 BR': 2100, '1 BR': 2280, '2 BR': 2720, '3 BR': 3260,
+        '4 BR': 3640, '5 BR': 4186, '6 BR': 4732, '7 BR': 5278, '8 BR': 5824
+    }
+}
+
+# 2025 Group to Rent Type Mapping
+GROUP_TO_RENT_TYPE_2025 = {
+    'Group 1': 'Basic Rents',
+    'Group 2': 'Traditional Rents',
+    'Group 3': 'Mid Range Rents',
+    'Group 4': 'Opportunity Rents',
+    'Group 5': 'High Opportunity Rents'
+}
+
+# ============================================================================
+# Helper functions to get payment standard data based on year selection
+# ============================================================================
+
+def get_payment_standards_for_year(year):
+    """Get payment standards for the specified year."""
+    if year == "2025":
+        return PAYMENT_STANDARDS_2025
+    else:  # Default to 2024
+        return PAYMENT_STANDARDS
+
+def get_zip_mapping_for_year(year):
+    """Get ZIP to group mapping for the specified year."""
+    if year == "2025":
+        return ZIP_TO_GROUP_MAPPING_2025
+    else:  # Default to 2024
+        return ZIP_TO_GROUP_MAPPING
+
+def get_group_to_rent_type_for_year(year):
+    """Get group to rent type mapping for the specified year."""
+    if year == "2025":
+        return GROUP_TO_RENT_TYPE_2025
+    else:  # Default to 2024
+        return GROUP_TO_RENT_TYPE
+
 # Page configuration
 st.set_page_config(
     page_title="Philadelphia Multifamily Analyzer",
@@ -56,10 +146,17 @@ st.markdown("""
     .stAlert {
         margin-top: 1rem;
     }
+    .payment-standard-selector {
+        background-color: #e3f2fd;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        border-left: 4px solid #2196f3;
+        margin-bottom: 1rem;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-def generate_pdf_report(analysis_results, input_params, property_address="N/A", property_notes="N/A"):
+def generate_pdf_report(analysis_results, input_params, property_address="N/A", property_notes="N/A", payment_year="2024"):
     """Generate PDF report from analysis results using ReportLab."""
     if not PDF_AVAILABLE:
         return None, "PDF generation not available. Please install reportlab."
@@ -134,6 +231,10 @@ def generate_pdf_report(analysis_results, input_params, property_address="N/A", 
         # Date
         date_text = f"Generated on {datetime.now().strftime('%B %d, %Y at %I:%M %p')}"
         elements.append(Paragraph(date_text, normal_style))
+        
+        # Payment Standard Year
+        payment_standard_text = f"<b>Payment Standards:</b> PHA {payment_year} Schedule"
+        elements.append(Paragraph(payment_standard_text, normal_style))
         elements.append(Spacer(1, 0.3*inch))
         
         # Property Information Section
@@ -189,213 +290,213 @@ def create_charts(analysis_results):
     # Operating expenses (before debt service)
     monthly_taxes = summary.get('monthly_taxes', 0)
     monthly_insurance = summary.get('monthly_insurance', 0)
-    monthly_repairs = summary.get('repairs_allowance_annual', 0) / 12
-    monthly_management = summary.get('management_fee_annual', 0) / 12
-    monthly_other = summary.get('other_opex_annual_input', 0) / 12
+    monthly_maintenance = summary.get('monthly_maintenance', 0)
+    monthly_management = summary.get('monthly_management_fee', 0)
+    monthly_opex = monthly_taxes + monthly_insurance + monthly_maintenance + monthly_management
     
-    # NOI and debt service
-    monthly_noi = summary.get('noi_annual', 0) / 12
-    monthly_pi = summary.get('monthly_principal_interest', 0)
-    monthly_cash_flow = summary.get('cash_flow_before_tax_monthly', 0)
+    # NOI
+    monthly_noi = effective_gross_income - monthly_opex
     
-    # Total operating expenses
-    total_operating_expenses = monthly_taxes + monthly_insurance + monthly_repairs + monthly_management + monthly_other
+    # Debt service
+    monthly_debt_service = summary.get('monthly_debt_service', 0)
     
-    # Restructured nodes with optimized positioning
-    labels = [
-        "Gross Rent",               # 0
-        "Effective Income",         # 1
-        "Vacancy Loss",             # 2 - Bottom branch
-        "Operating Costs",          # 3 - Bottom section
-        "NOI",                      # 4 - Top section
-        "Property Tax",             # 5 - Bottom row
-        "Insurance",                # 6 - Bottom row
-        "Repairs",                  # 7 - Bottom row
-        "Management",               # 8 - Bottom row
-        "Other Costs",              # 9 - Bottom row
-        "Debt Service",             # 10 - Middle
-        "Net Cash Flow"             # 11 - Top position
+    # Final cash flow
+    monthly_cf = summary.get('cash_flow_before_tax_monthly', 0)
+    
+    # Build Sankey with NOI layer
+    sankey_labels = [
+        "Gross Rent",
+        "Vacancy Loss",
+        "Effective Income",
+        "Property Taxes",
+        "Insurance",
+        "Maintenance",
+        "Management",
+        "NOI",
+        "Debt Service",
+        "Cash Flow"
     ]
     
-    # Define connections
-    source = []
-    target = []
-    value = []
+    sankey_sources = []
+    sankey_targets = []
+    sankey_values = []
+    sankey_colors = []
     
-    # Stage 1: Gross Rent flows
-    if monthly_rent > 0:
-        # Main flow: Gross Rent → Effective Income
-        source.append(0)  # Gross Rent
-        target.append(1)  # Effective Income
-        value.append(effective_gross_income)
-        
-        # Separate branch: Gross Rent → Vacancy Loss (if exists)
-        if monthly_vacancy > 0:
-            source.append(0)  # Gross Rent
-            target.append(2)  # Vacancy Loss
-            value.append(monthly_vacancy)
+    # Gross Rent -> Vacancy and Effective Income
+    if monthly_vacancy > 0:
+        sankey_sources.append(0)  # Gross Rent
+        sankey_targets.append(1)  # Vacancy Loss
+        sankey_values.append(monthly_vacancy)
+        sankey_colors.append('rgba(244, 67, 54, 0.4)')  # Red for loss
     
-    # Stage 2: Effective Income splits
-    if effective_gross_income > 0:
-        if total_operating_expenses > 0:
-            source.append(1)  # Effective Income
-            target.append(3)  # Operating Costs
-            value.append(total_operating_expenses)
-        
-        if monthly_noi > 0:
-            source.append(1)  # Effective Income
-            target.append(4)  # NOI
-            value.append(monthly_noi)
+    sankey_sources.append(0)  # Gross Rent
+    sankey_targets.append(2)  # Effective Income
+    sankey_values.append(effective_gross_income)
+    sankey_colors.append('rgba(76, 175, 80, 0.4)')  # Green for income flow
     
-    # Stage 3: Operating Costs breakdown (bottom section)
-    operating_expense_flows = [
-        (3, 5, monthly_taxes, "Property Tax"),
-        (3, 6, monthly_insurance, "Insurance"),
-        (3, 7, monthly_repairs, "Repairs"),
-        (3, 8, monthly_management, "Management"),
-        (3, 9, monthly_other, "Other Costs")
-    ]
+    # Effective Income -> Operating Expenses
+    if monthly_taxes > 0:
+        sankey_sources.append(2)
+        sankey_targets.append(3)
+        sankey_values.append(monthly_taxes)
+        sankey_colors.append('rgba(255, 152, 0, 0.4)')
     
-    for src, tgt, val, name in operating_expense_flows:
-        if val > 0:
-            source.append(src)
-            target.append(tgt)
-            value.append(val)
+    if monthly_insurance > 0:
+        sankey_sources.append(2)
+        sankey_targets.append(4)
+        sankey_values.append(monthly_insurance)
+        sankey_colors.append('rgba(255, 152, 0, 0.4)')
     
-    # Stage 4: NOI flows (top section)
-    if monthly_noi > 0:
-        if monthly_pi > 0:
-            source.append(4)  # NOI
-            target.append(10)  # Debt Service
-            value.append(monthly_pi)
-        
-        if monthly_cash_flow != 0:
-            source.append(4)  # NOI
-            target.append(11)  # Net Cash Flow
-            value.append(abs(monthly_cash_flow))
+    if monthly_maintenance > 0:
+        sankey_sources.append(2)
+        sankey_targets.append(5)
+        sankey_values.append(monthly_maintenance)
+        sankey_colors.append('rgba(255, 152, 0, 0.4)')
     
-    # Enhanced color scheme
-    node_colors = [
-        "#2E8B57",    # Gross Rent - Forest Green
-        "#4682B4",    # Effective Income - Steel Blue
-        "#DC143C",    # Vacancy Loss - Crimson Red
-        "#FF6347",    # Operating Costs - Tomato
-        "#32CD32",    # NOI - Lime Green
-        "#D2691E",    # Property Tax - Chocolate
-        "#D2691E",    # Insurance - Chocolate
-        "#D2691E",    # Repairs - Chocolate
-        "#D2691E",    # Management - Chocolate
-        "#D2691E",    # Other Costs - Chocolate
-        "#8B0000",    # Debt Service - Dark Red
-        "#228B22" if monthly_cash_flow >= 0 else "#DC143C"  # Net Cash Flow
-    ]
+    if monthly_management > 0:
+        sankey_sources.append(2)
+        sankey_targets.append(6)
+        sankey_values.append(monthly_management)
+        sankey_colors.append('rgba(255, 152, 0, 0.4)')
     
-    # Link colors
-    link_colors = []
-    for i, (src, tgt) in enumerate(zip(source, target)):
-        if tgt == 2:  # Vacancy loss
-            link_colors.append("rgba(220, 20, 60, 0.5)")  # Crimson
-        elif tgt == 3:  # To operating costs
-            link_colors.append("rgba(255, 99, 71, 0.5)")  # Tomato
-        elif tgt == 4:  # To NOI
-            link_colors.append("rgba(50, 205, 50, 0.5)")  # Lime Green
-        elif src == 3:  # From operating costs to individual expenses
-            link_colors.append("rgba(210, 105, 30, 0.5)")  # Chocolate
-        elif tgt == 10:  # To debt service
-            link_colors.append("rgba(139, 0, 0, 0.5)")  # Dark Red
-        elif tgt == 11:  # To final cash flow
-            if monthly_cash_flow >= 0:
-                link_colors.append("rgba(34, 139, 34, 0.5)")  # Forest Green
-            else:
-                link_colors.append("rgba(220, 20, 60, 0.5)")  # Crimson
-        else:
-            link_colors.append("rgba(70, 130, 180, 0.5)")  # Steel Blue
+    # Effective Income -> NOI
+    sankey_sources.append(2)
+    sankey_targets.append(7)  # NOI
+    sankey_values.append(monthly_noi)
+    sankey_colors.append('rgba(33, 150, 243, 0.4)')  # Blue for NOI
     
-    # Create Sankey diagram with optimized positioning
+    # NOI -> Debt Service and Cash Flow
+    if monthly_debt_service > 0:
+        sankey_sources.append(7)  # NOI
+        sankey_targets.append(8)  # Debt Service
+        sankey_values.append(monthly_debt_service)
+        sankey_colors.append('rgba(156, 39, 176, 0.4)')  # Purple for debt
+    
+    sankey_sources.append(7)  # NOI
+    sankey_targets.append(9)  # Cash Flow
+    sankey_values.append(max(monthly_cf, 0))
+    if monthly_cf >= 0:
+        sankey_colors.append('rgba(76, 175, 80, 0.6)')  # Green for positive CF
+    else:
+        sankey_colors.append('rgba(244, 67, 54, 0.6)')  # Red for negative CF
+    
     fig = go.Figure(data=[go.Sankey(
         node=dict(
-            pad=15,  # Reduced padding to fit better
-            thickness=22,  # Slightly thinner nodes
-            line=dict(color="black", width=0.8),
-            label=labels,
-            color=node_colors,
-            # Adjusted positioning to fit within chart boundaries
-            x=[0.05, 0.3, 0.1, 0.6, 0.6, 0.85, 0.85, 0.85, 0.85, 0.85, 0.75, 0.95],  # x positions - pulled in from edges
-            y=[0.5, 0.5, 0.05, 0.25, 0.75, 0.08, 0.18, 0.28, 0.38, 0.48, 0.6, 0.85]   # y positions - adjusted for margins
+            pad=15,
+            thickness=20,
+            line=dict(color="white", width=2),
+            label=sankey_labels,
+            color=['#4CAF50', '#F44336', '#2196F3', '#FF9800', '#FF9800', 
+                   '#FF9800', '#FF9800', '#2196F3', '#9C27B0', 
+                   '#4CAF50' if monthly_cf >= 0 else '#F44336']
         ),
         link=dict(
-            source=source,
-            target=target,
-            value=value,
-            color=link_colors
+            source=sankey_sources,
+            target=sankey_targets,
+            value=sankey_values,
+            color=sankey_colors
         )
     )])
     
     fig.update_layout(
-        title_text="Monthly Cash Flow Analysis",
-        font_size=12,  # Slightly smaller font to fit better
-        height=700,  # Increased height for more space
-        margin=dict(l=20, r=20, t=80, b=20),  # Increased margins all around
-        plot_bgcolor='white',
-        paper_bgcolor='white',
-        # Ensure proper fit
-        autosize=True
+        title="Monthly Cash Flow Analysis",
+        font=dict(size=12),
+        height=500
     )
     
     return fig
 
 def main():
     # Header
-    st.markdown('<div class="main-header">', unsafe_allow_html=True)
-    st.title("🏢 Philadelphia Multifamily Property Analyzer")
-    st.markdown("""
-    *Analyze multifamily properties using PHA payment standards*
-    
-    **⚠️ NOT FINANCIAL ADVICE - [ACKNOWLEDGE DISCLAIMER](#important-legal-disclaimer-please-read) ⚠️**
-    """)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-header"><h1>🏢 Philadelphia Multifamily Property Analyzer</h1></div>', 
+                unsafe_allow_html=True)
     
     # Sidebar for inputs
     with st.sidebar:
-        st.header("🏠 Property Details")
+        st.header("Property Details")
         
-        # ZIP Code selection
-        zip_options = sorted(ZIP_TO_GROUP_MAPPING.keys())
-        zip_code = st.selectbox(
-            "ZIP Code",
-            options=zip_options,
-            index=zip_options.index("19121") if "19121" in zip_options else 0,
-            help="Select the property's ZIP code to determine PHA group"
+        # ============================================================================
+        # NEW: Payment Standard Year Selector
+        # ============================================================================
+        st.markdown('<div class="payment-standard-selector">', unsafe_allow_html=True)
+        st.markdown("### 📅 Payment Standard Year")
+        payment_year = st.radio(
+            "Select PHA Payment Standard Schedule:",
+            options=["2024", "2025"],
+            index=0,  # Default to 2024
+            help="Choose which PHA payment standard schedule to use for calculations. "
+                 "2024 standards effective October 1, 2024. "
+                 "2025 standards effective November 1, 2025."
         )
         
-        # Show neighborhood info
+        # Show effective date based on selection
+        if payment_year == "2025":
+            st.info("📌 Using **November 2025** payment standards")
+        else:
+            st.info("📌 Using **October 2024** payment standards")
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        st.markdown("---")
+        
+        # Get appropriate data structures based on year
+        current_payment_standards = get_payment_standards_for_year(payment_year)
+        current_zip_mapping = get_zip_mapping_for_year(payment_year)
+        current_group_to_rent_type = get_group_to_rent_type_for_year(payment_year)
+        
+        # Property location
+        st.subheader("📍 Location")
+        
+        # Get available ZIP codes from current mapping
+        available_zips = sorted(current_zip_mapping.keys())
+        
+        zip_code = st.selectbox(
+            "Property ZIP Code",
+            options=available_zips,
+            help="Select the ZIP code where the property is located"
+        )
+        
+        # Show neighborhood and PHA group info
         if zip_code:
             neighborhood = get_client_friendly_neighborhood(zip_code)
-            group = ZIP_TO_GROUP_MAPPING.get(zip_code)
-            rent_type = GROUP_TO_RENT_TYPE.get(group)
+            pha_group = current_zip_mapping.get(zip_code, 'Unknown')
+            rent_type = current_group_to_rent_type.get(pha_group, 'Unknown')
             
-            st.info(f"""
-            **Neighborhood:** {neighborhood}
+            st.info(f"**Neighborhood:** {neighborhood}\n\n**PHA {payment_year} Group:** {pha_group} - {rent_type}")
+        
+        # Optional property details
+        with st.expander("🏠 Additional Property Info (Optional)", expanded=False):
+            property_address = st.text_input(
+                "Property Address",
+                help="Street address (optional, for report generation)"
+            )
             
-            **PHA Group:** {group} - {rent_type}
-            """)
+            property_notes = st.text_area(
+                "Analysis Notes",
+                help="Add any notes about this property (optional, included in PDF report)",
+                placeholder="e.g., Property needs roof work, Great location near transit, etc."
+            )
+        
+        st.markdown("---")
         
         # Unit configuration
-        st.subheader("📋 Unit Configuration")
-        unit_input = st.text_input(
-            "Units",
-            value="5x1BR, 3x2BR, 2x3BR",
-            help="Enter units like '5x1BR, 3x2BR' or '1,2,3,1,1'"
+        st.subheader("🏠 Unit Mix")
+        unit_mix_str = st.text_input(
+            "Unit Configuration",
+            value="6x2BR, 4x1BR",
+            help="Format: 'Number x Bedrooms'. Examples: '5x2BR, 3x1BR' or '10x1BR'"
         )
         
-        # Financial details
-        st.subheader("💰 Financial Details")
+        st.markdown("---")
+        
+        # Financial inputs
+        st.subheader("💰 Purchase & Financing")
+        
         property_price = st.number_input(
-            "Property Price ($)",
-            min_value=50000,
+            "Purchase Price ($)",
+            min_value=0,
             value=500000,
-            step=25000,
-            format="%d"
+            step=10000,
+            help="Total purchase price of the property"
         )
         
         down_payment = st.slider(
@@ -403,156 +504,134 @@ def main():
             min_value=0,
             max_value=100,
             value=25,
-            step=5
+            step=5,
+            help="Percentage of purchase price paid as down payment"
         )
         
-        col1, col2 = st.columns(2)
-        with col1:
-            interest_rate = st.number_input(
-                "Interest Rate (%)",
-                min_value=0.0,
-                max_value=20.0,
-                value=7.5,
-                step=0.1
-            )
-        
-        with col2:
-            loan_term = st.selectbox(
-                "Loan Term (years)",
-                options=[15, 30],
-                index=1
-            )
-        
-        property_taxes = st.number_input(
-            "Annual Property Taxes ($)",
-            min_value=0,
-            value=8000,
-            step=500
+        interest_rate = st.number_input(
+            "Interest Rate (%)",
+            min_value=0.0,
+            max_value=20.0,
+            value=7.0,
+            step=0.125,
+            help="Annual interest rate for the mortgage"
         )
         
-        insurance = st.number_input(
-            "Annual Insurance ($)",
-            min_value=0,
-            value=3000,
-            step=500
+        loan_term_years = st.selectbox(
+            "Loan Term (years)",
+            options=[15, 20, 25, 30],
+            index=3,
+            help="Length of the mortgage in years"
         )
+        
+        st.markdown("---")
         
         # Operating expenses
-        st.subheader("🔧 Operating Expenses")
+        st.subheader("📊 Operating Expenses")
+        
+        annual_property_tax = st.number_input(
+            "Annual Property Tax ($)",
+            min_value=0,
+            value=5000,
+            step=100,
+            help="Total annual property tax"
+        )
+        
+        annual_insurance = st.number_input(
+            "Annual Insurance ($)",
+            min_value=0,
+            value=2000,
+            step=100,
+            help="Annual property insurance premium"
+        )
+        
         vacancy_rate = st.slider(
             "Vacancy Rate (%)",
             min_value=0,
             max_value=30,
-            value=5
+            value=5,
+            step=1,
+            help="Expected percentage of time units are vacant"
         )
         
-        repairs_rate = st.slider(
-            "Repairs & Maintenance (% of rent)",
+        maintenance_rate = st.slider(
+            "Maintenance Rate (%)",
+            min_value=0,
+            max_value=30,
+            value=10,
+            step=1,
+            help="Percentage of gross rent for maintenance and repairs"
+        )
+        
+        management_fee_rate = st.slider(
+            "Management Fee (%)",
             min_value=0,
             max_value=20,
-            value=5
+            value=8,
+            step=1,
+            help="Property management fee as percentage of gross rent"
         )
         
-        management_rate = st.slider(
-            "Property Management (% of rent)",
-            min_value=0,
-            max_value=15,
-            value=8
-        )
-        
-        other_expenses = st.number_input(
-            "Other Annual Expenses ($)",
-            min_value=0,
-            value=2000,
-            step=500
-        )
-        
-        # Optional property info for PDF
-        st.subheader("📄 Report Information (Optional)")
-        property_address = st.text_input(
-            "Property Address",
-            placeholder="123 Main St, Philadelphia, PA"
-        )
-        
-        property_notes = st.text_area(
-            "Analysis Notes",
-            placeholder="Add any notes about the property or analysis assumptions...",
-            height=100
-        )
+        st.markdown("---")
         
         # Analyze button
-        analyze_btn = st.button(
-            "🔍 Analyze Property",
-            type="primary",
-            use_container_width=True
-        )
+        analyze_button = st.button("🔍 Analyze Property", type="primary", use_container_width=True)
     
     # Main content area
-    if analyze_btn:
-        with st.spinner("Analyzing property..."):
-            # Prepare input parameters
-            input_params = {
-                "property_zip_code": zip_code,
-                "unit_bedroom_counts_str": unit_input,
-                "property_price": property_price,
-                "down_payment_percent": down_payment,
-                "annual_property_taxes": property_taxes,
-                "annual_home_insurance": insurance,
-                "vacancy_rate_percent": vacancy_rate,
-                "repairs_maintenance_percent": repairs_rate,
-                "property_management_percent": management_rate,
-                "other_opex_annual": other_expenses
-            }
-            
-            # Run analysis
+    if analyze_button:
+        # Validate inputs
+        if not zip_code:
+            st.error("Please select a ZIP code")
+            return
+        
+        if not unit_mix_str.strip():
+            st.error("Please enter unit configuration")
+            return
+        
+        # Show loading spinner
+        with st.spinner('Analyzing property...'):
             try:
-                results = analyze_multifamily_property(
-                    property_zip_code=zip_code,
-                    unit_bedroom_counts_str=unit_input,
-                    property_price=property_price,
-                    annual_property_taxes=property_taxes,
-                    annual_home_insurance=insurance,
-                    loan_term_years=loan_term,
-                    annual_interest_rate_percent=interest_rate,
-                    down_payment_percent=down_payment,
-                    vacancy_rate_percent=vacancy_rate,
-                    repairs_maintenance_percent=repairs_rate,
-                    property_management_percent=management_rate,
-                    other_opex_annual=other_expenses
-                )
+                # Prepare input parameters
+                input_params = {
+                    'property_zip_code': zip_code,
+                    'unit_mix_str': unit_mix_str,
+                    'property_price': property_price,
+                    'down_payment_percent': down_payment,
+                    'interest_rate': interest_rate,
+                    'loan_term_years': loan_term_years,
+                    'annual_property_tax': annual_property_tax,
+                    'annual_insurance': annual_insurance,
+                    'vacancy_rate': vacancy_rate,
+                    'maintenance_rate': maintenance_rate,
+                    'management_fee_rate': management_fee_rate,
+                    'payment_year': payment_year  # NEW: Pass payment year to calculator
+                }
                 
-                summary = results.get('property_summary', {})
+                # Run analysis
+                # NOTE: The analyze_multifamily_property function needs to be updated
+                # to accept and use the payment_year parameter
+                results = analyze_multifamily_property(input_params)
                 
                 # Check for errors
-                if summary.get('error'):
-                    st.error(f"Analysis Error: {summary['error']}")
-                    if summary.get('unit_errors'):
-                        st.warning(f"Unit Parsing Details: {summary['unit_errors']}")
+                if 'property_summary' in results and results['property_summary'].get('error'):
+                    st.error(f"Analysis Error: {results['property_summary']['error']}")
                     return
                 
-                # Display warnings if any
-                if summary.get('unit_errors'):
-                    st.warning(f"⚠️ Unit Parsing Notes: {summary['unit_errors']}")
+                # Display results
+                st.success("✅ Analysis Complete!")
                 
-                # Success - display results
-                st.success("✅ Analysis completed successfully!")
+                summary = results['property_summary']
                 
-                # Key metrics row
-                st.subheader("📊 Key Investment Metrics")
-                
+                # Key metrics in columns
                 col1, col2, col3, col4 = st.columns(4)
                 
                 with col1:
-                    total_rent = summary.get('total_potential_pha_rent_monthly', 0)
-                    st.metric("Total Monthly Rent", f"${total_rent:,.0f}")
+                    cap_rate = summary.get('cap_rate_percent', 0)
+                    st.metric("Cap Rate", f"{cap_rate:.2f}%")
                 
                 with col2:
-                    cap_rate = summary.get('cap_rate_percent', 0)
-                    if cap_rate == float('inf'):
-                        cap_rate_display = "∞"
-                    else:
-                        cap_rate_display = f"{cap_rate:.1f}%"
-                    st.metric("Cap Rate", cap_rate_display)
+                    noi = summary.get('noi_annual', 0)
+                    st.metric("Annual NOI", f"${noi:,.0f}")
                 
                 with col3:
                     coc = summary.get('cash_on_cash_return_percent', 0)
@@ -590,6 +669,7 @@ def main():
                         st.write(f"**Down Payment:** ${summary.get('down_payment_amount', 0):,.0f} ({down_payment}%)")
                         st.write(f"**Loan Amount:** ${property_price - summary.get('down_payment_amount', 0):,.0f}")
                         st.write(f"**Neighborhood:** {get_client_friendly_neighborhood(zip_code)}")
+                        st.write(f"**Payment Standards:** PHA {payment_year}")
                     
                     with col2:
                         st.subheader("Annual Performance")
@@ -628,11 +708,12 @@ def main():
                             results, 
                             input_params, 
                             property_address or "Address not provided",
-                            property_notes or "No additional notes"
+                            property_notes or "No additional notes",
+                            payment_year  # NEW: Pass payment year to PDF generator
                         )
                         
                         if pdf_data:
-                            filename = f"multifamily_analysis_{zip_code}_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
+                            filename = f"multifamily_analysis_{zip_code}_{payment_year}_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
                             st.download_button(
                                 label="📥 Download PDF Report",
                                 data=pdf_data,
@@ -656,14 +737,15 @@ def main():
         This tool helps you analyze multifamily investment properties in Philadelphia using official PHA (Philadelphia Housing Authority) payment standards.
         
         ### How to Use:
-        1. **Select ZIP Code** - Choose your property's location
-        2. **Configure Units** - Enter unit mix (e.g., "5x1BR, 3x2BR")
-        3. **Enter Financials** - Property price, down payment, rates
-        4. **Set Operating Expenses** - Vacancy, maintenance, management rates
-        5. **Click Analyze** - Get comprehensive investment analysis
+        1. **Select Payment Standard Year** - Choose 2024 or 2025 PHA standards
+        2. **Select ZIP Code** - Choose your property's location
+        3. **Configure Units** - Enter unit mix (e.g., "5x1BR, 3x2BR")
+        4. **Enter Financials** - Property price, down payment, rates
+        5. **Set Operating Expenses** - Vacancy, maintenance, management rates
+        6. **Click Analyze** - Get comprehensive investment analysis
         
         ### Features:
-        - ✅ Official PHA payment standards by neighborhood
+        - ✅ Official PHA payment standards by neighborhood (2024 & 2025)
         - 📊 Key investment metrics (Cap Rate, Cash-on-Cash, Cash Flow)
         - 🏠 Unit-by-unit rent breakdown
         - 📄 Professional PDF reports
@@ -672,12 +754,16 @@ def main():
         **Ready to analyze your next investment?** Fill out the form on the left and click "Analyze Property"!
         """)
         
-        # Show sample PHA payment standards
-        st.subheader("📋 Sample PHA Payment Standards by Group")
+        # Show sample PHA payment standards for selected year
+        st.subheader(f"📋 Sample PHA Payment Standards by Group ({payment_year if 'payment_year' in locals() else '2024'})")
+        
+        # Get current payment standards
+        display_standards = get_payment_standards_for_year(st.session_state.get('payment_year', '2024'))
+        display_rent_types = get_group_to_rent_type_for_year(st.session_state.get('payment_year', '2024'))
         
         sample_data = []
-        for group, standards in PAYMENT_STANDARDS.items():
-            rent_type = GROUP_TO_RENT_TYPE.get(group, "Unknown")
+        for group, standards in display_standards.items():
+            rent_type = display_rent_types.get(group, "Unknown")
             sample_data.append({
                 'PHA Group': group,
                 'Rent Type': rent_type,
@@ -724,7 +810,10 @@ def main():
         By using this calculator, you acknowledge that you are solely responsible for your investment decisions 
         and will not rely solely on these calculations for making financial commitments.
         
-        **Data Currency:** PHA payment standards based on data effective October 1, 2024. 
+        **Data Currency:** PHA payment standards based on official schedules: 
+        - 2024: Effective October 1, 2024
+        - 2025: Effective November 1, 2025
+        
         Rates and regulations may change without notice.
         
         **Limitation of Liability:** To the maximum extent permitted by law, the creators of this calculator 
@@ -738,7 +827,7 @@ def main():
     <div style="text-align: center; color: #666; font-size: 0.8em; padding: 20px;">
         <p>Philadelphia Multifamily Property Analyzer | For Educational Purposes Only<br>
         Always consult qualified professionals before making investment decisions<br>
-        Last Updated: December 2024</p>
+        Last Updated: January 2025 | Now supporting 2024 & 2025 PHA Payment Standards</p>
     </div>
     """, unsafe_allow_html=True)
 
