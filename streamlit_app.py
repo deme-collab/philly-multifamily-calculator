@@ -604,7 +604,7 @@ def main():
                     'vacancy_rate_percent': vacancy_rate,
                     'repairs_maintenance_percent': maintenance_rate,
                     'property_management_percent': management_fee_rate,
-                    'other_opex_annaul': 0,
+                    'other_opex_annual': 0,
                     'payment_year': payment_year  # NEW: Pass payment year to calculator
                 }
                 
