@@ -594,16 +594,17 @@ def main():
                 # Prepare input parameters
                 input_params = {
                     'property_zip_code': zip_code,
-                    'unit_mix_str': unit_mix_str,
+                    'unit_bedroom_counts_str': unit_mix_str,
                     'property_price': property_price,
                     'down_payment_percent': down_payment,
                     'interest_rate': interest_rate,
                     'loan_term_years': loan_term_years,
-                    'annual_property_tax': annual_property_tax,
-                    'annual_insurance': annual_insurance,
-                    'vacancy_rate': vacancy_rate,
-                    'maintenance_rate': maintenance_rate,
-                    'management_fee_rate': management_fee_rate,
+                    'annual_property_taxes': annual_property_tax,
+                    'annual_home_insurance': annual_insurance,
+                    'vacancy_rate_percent': vacancy_rate,
+                    'repairs_maintenance_rate': maintenance_rate,
+                    'property_management_percent': management_fee_rate,
+                    'other_opex_annaul': 0,
                     'payment_year': payment_year  # NEW: Pass payment year to calculator
                 }
                 
